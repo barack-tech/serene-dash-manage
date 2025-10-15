@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { DeceasedRecordForm, DeceasedRecord } from "@/components/records/DeceasedRecordForm";
+import { RecordDetailView } from "@/components/records/RecordDetailView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -61,6 +62,7 @@ const initialRecords: DeceasedRecord[] = [
 const Records = () => {
   const [records, setRecords] = useState<DeceasedRecord[]>(initialRecords);
   const [formOpen, setFormOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedRecord, setSelectedRecord] = useState<DeceasedRecord | undefined>();
@@ -96,6 +98,52 @@ const Records = () => {
     const matchesStatus = statusFilter === "all" || record.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handlePrintRecord = (record: DeceasedRecord) => {
+    const printContent = `
+      DECEASED RECORD - ${record.id}
+      
+      Full Name: ${record.fullName}
+      Date of Birth: ${new Date(record.dateOfBirth).toLocaleDateString()}
+      Date of Death: ${new Date(record.dateOfDeath).toLocaleDateString()}
+      Gender: ${record.gender}
+      ID/Passport: ${record.identification}
+      Cause of Death: ${record.causeOfDeath}
+      
+      Next of Kin: ${record.nextOfKin}
+      Contact: ${record.contactNumber}
+      Address: ${record.address}
+      Religion: ${record.religion || "Not specified"}
+      
+      Admission Date: ${new Date(record.admissionDate).toLocaleDateString()}
+      Status: ${record.status}
+      
+      Notes: ${record.notes || "None"}
+    `;
+    
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Deceased Record - ${record.id}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+              h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+              pre { white-space: pre-wrap; line-height: 1.6; }
+            </style>
+          </head>
+          <body>
+            <h1>Deceased Record</h1>
+            <pre>${printContent}</pre>
+            <script>window.print(); window.onafterprint = () => window.close();</script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+    toast.success("Opening print dialog...");
+  };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "outline"> = {
@@ -186,15 +234,29 @@ const Records = () => {
                             size="sm"
                             onClick={() => {
                               setSelectedRecord(record);
+                              setViewOpen(true);
+                            }}
+                            title="View Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRecord(record);
                               setFormOpen(true);
                             }}
+                            title="Edit Record"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePrintRecord(record)}
+                            title="Print Record"
+                          >
                             <FileText className="h-4 w-4" />
                           </Button>
                         </div>
@@ -220,6 +282,12 @@ const Records = () => {
         }}
         onSubmit={selectedRecord ? handleEditRecord : handleAddRecord}
         initialData={selectedRecord}
+      />
+
+      <RecordDetailView
+        record={selectedRecord || null}
+        open={viewOpen}
+        onOpenChange={setViewOpen}
       />
     </MainLayout>
   );
