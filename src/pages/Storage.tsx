@@ -158,7 +158,22 @@ const Storage = () => {
   const handleRelease = async (unit: StorageUnit) => {
   try {
     const updated = await releaseUnit(Number(unit.id));
-    const formatted = { /* map updated as above */ };
+    const formatted: StorageUnit = {
+      id: String(updated.id),
+      unitNumber: updated.unit_number,
+      wing: updated.wing,
+      floor: updated.floor,
+      status: updated.status,
+      temperature: updated.temperature ?? -4,
+      capacity: updated.capacity ?? "single",
+      lastMaintenance: updated.last_maintenance ?? null,
+      occupant: updated.occupant_id ? {
+        recordId: String(updated.occupant_id),
+        name: updated.occupant_name,
+        dateAdmitted: updated.date_admitted?.split("T")[0],
+        storageDeadline: updated.storage_deadline?.split("T")[0],
+      } : undefined
+    };
     setUnits(prev => prev.map(u => String(u.id) === String(formatted.id) ? formatted : u));
     toast({ title: "Unit Released", description: `${unit.unitNumber} is now available` });
   } catch (err) {
@@ -178,7 +193,22 @@ const Storage = () => {
   const handleMaintenance = async (unit: StorageUnit) => {
   try {
     const updated = await setMaintenance(Number(unit.id), true);
-    const formatted = { /* map */ };
+    const formatted: StorageUnit = {
+      id: String(updated.id),
+      unitNumber: updated.unit_number,
+      wing: updated.wing,
+      floor: updated.floor,
+      status: updated.status,
+      temperature: updated.temperature ?? -4,
+      capacity: updated.capacity ?? "single",
+      lastMaintenance: updated.last_maintenance ?? null,
+      occupant: updated.occupant_id ? {
+        recordId: String(updated.occupant_id),
+        name: updated.occupant_name,
+        dateAdmitted: updated.date_admitted?.split("T")[0],
+        storageDeadline: updated.storage_deadline?.split("T")[0],
+      } : undefined
+    };
     setUnits(prev => prev.map(u => u.id === formatted.id ? formatted : u));
     toast({ title: "Maintenance Mode", description: `${unit.unitNumber} set to maintenance` });
   } catch (err) {
@@ -300,7 +330,10 @@ const Storage = () => {
             <StorageUnitCard
               key={unit.id}
               unit={unit}
-              onAssign={handleAssign}
+              onAssign={(unit) => {
+                setSelectedUnit(unit);
+                setAssignDialogOpen(true);
+              }}
               onRelease={handleRelease}
               onViewDetails={handleViewDetails}
               onMaintenance={handleMaintenance}
