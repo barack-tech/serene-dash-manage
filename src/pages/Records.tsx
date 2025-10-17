@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { fetchDeceasedRecords, addDeceasedRecord } from "@/lib/api";
+
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { DeceasedRecordForm, DeceasedRecord } from "@/components/records/DeceasedRecordForm";
@@ -60,23 +63,100 @@ const initialRecords: DeceasedRecord[] = [
 ];
 
 const Records = () => {
-  const [records, setRecords] = useState<DeceasedRecord[]>(initialRecords);
+  const [records, setRecords] = useState<DeceasedRecord[]>([]);
+  useEffect(() => {
+  fetchDeceasedRecords()
+    .then((data) => {
+  const formatted = data.map((r: any) => ({
+    id: `DR-${r.id.toString().padStart(3, "0")}`,
+    fullName: r.full_name || "",
+    dateOfBirth: r.date_of_birth || "",
+    dateOfDeath: r.date_of_death || "",
+    gender: r.gender || "",
+    identification: r.identification || "",
+    causeOfDeath: r.cause_of_death || "",
+    nextOfKin: r.next_of_kin || "",
+    contactNumber: r.contact_number || "",
+    address: r.address || "",
+    religion: r.religion || "",
+    admissionDate: r.admission_date || "",
+    status: r.status || "pending",
+    notes: r.notes || "",
+  }));
+  setRecords(formatted);
+})
+
+    .catch((err) => console.error("Error loading records:", err));
+}, []);
+
   const [formOpen, setFormOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedRecord, setSelectedRecord] = useState<DeceasedRecord | undefined>();
 
-  const handleAddRecord = (data: Omit<DeceasedRecord, "id" | "admissionDate" | "status">) => {
-    const newRecord: DeceasedRecord = {
-      ...data,
-      id: `DR-${String(records.length + 1).padStart(3, "0")}`,
-      admissionDate: new Date().toISOString().split("T")[0],
-      status: "pending",
-    };
-    setRecords([newRecord, ...records]);
-    toast.success("Deceased record added successfully");
+  const handleAddRecord = async (data: Omit<DeceasedRecord, "id" | "admissionDate" | "status">) => {
+  const payload = {
+    full_name: data.fullName,
+    date_of_birth: data.dateOfBirth,
+    date_of_death: data.dateOfDeath,
+    gender: data.gender,
+    identification: data.identification,
+    cause_of_death: data.causeOfDeath,
+    next_of_kin: data.nextOfKin,
+    contact_number: data.contactNumber,
+    address: data.address,
+    religion: data.religion,
+    notes: data.notes,
   };
+
+  try {
+    const res = await fetch("http://localhost:8000/deceased", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error("Failed to add record");
+
+    const newRecord = await res.json();
+
+    // Convert backend response to frontend shape safely
+    const formatted = {
+      id: `DR-${newRecord.id.toString().padStart(3, "0")}`,
+      fullName: newRecord.full_name || "",
+      dateOfBirth: newRecord.date_of_birth || "",
+      dateOfDeath: newRecord.date_of_death || "",
+      gender: newRecord.gender || "",
+      identification: newRecord.identification || "",
+      causeOfDeath: newRecord.cause_of_death || "",
+      nextOfKin: newRecord.next_of_kin || "",
+      contactNumber: newRecord.contact_number || "",
+      address: newRecord.address || "",
+      religion: newRecord.religion || "",
+      admissionDate: newRecord.admission_date || "",
+      status: newRecord.status || "pending",
+      notes: newRecord.notes || "",
+    };
+
+    // Update UI safely
+    setRecords((prev) => [formatted, ...prev]);
+    setFormOpen(false);
+
+    // ✅ Creative popup feedback
+    toast.success("✅ Record added successfully!", {
+      description: `${data.fullName} has been registered.`,
+      duration: 3000,
+    });
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to add record", {
+      description: "Please check your connection or try again later.",
+    });
+  }
+};
+
+
 
   const handleEditRecord = (data: Omit<DeceasedRecord, "id" | "admissionDate" | "status">) => {
     if (selectedRecord) {
