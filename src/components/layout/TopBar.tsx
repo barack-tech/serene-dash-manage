@@ -1,4 +1,4 @@
-import { Search, Bell, User, Menu } from "lucide-react";
+import { Search, Bell, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -11,8 +11,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 
 export function TopBar() {
+  const { profile, role, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -64,18 +71,24 @@ export function TopBar() {
                 <User className="h-4 w-4 text-primary-foreground" />
               </div>
               <div className="text-left hidden md:block">
-                <p className="text-sm font-medium">Dr. Sarah Johnson</p>
-                <p className="text-xs text-muted-foreground">Director</p>
+                <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
+                <p className="text-xs text-muted-foreground capitalize">{role || 'Loading...'}</p>
               </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel className="font-normal text-muted-foreground text-xs">
+              {profile?.email}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
