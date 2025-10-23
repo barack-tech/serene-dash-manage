@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Records from "./pages/Records";
 import Storage from "./pages/Storage";
 import Scheduling from "./pages/Scheduling";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/records" element={<Records />} />
           <Route path="/storage" element={<Storage />} />
           <Route path="/scheduling" element={<Scheduling />} />
+          <Route path="/notifications" element={<Notifications />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
